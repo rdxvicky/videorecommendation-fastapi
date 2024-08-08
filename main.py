@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from pydantic import BaseModel
 import torch
 import pickle
 from google.cloud import storage
@@ -34,6 +35,10 @@ class RecSysModel(nn.Module):
         x = self.fc4(x)
         return x.squeeze()
 
+class PredictRequest(BaseModel):
+    user_id: int
+    num_recommendations: int = 10
+
 # Load model and mappings
 storage_client = storage.Client()
 bucket_name = 'pytorch-recommendation'
@@ -59,7 +64,10 @@ user_encoded_to_user = load_pickle_from_gcs('user_encoded_to_user.pkl')
 video_encoded_to_video = load_pickle_from_gcs('video_encoded_to_video.pkl')
 
 @app.post("/predict")
-async def predict(user_id: int, num_recommendations: int = 10):
+async def predict(request: PredictRequest):
+    user_id = request.user_id
+    num_recommendations = request.num_recommendations
+    
     if user_id not in user_to_user_encoded:
         raise HTTPException(status_code=400, detail="User ID not found")
     
