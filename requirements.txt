@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+torch
+torchvision
+google-cloud-storage
